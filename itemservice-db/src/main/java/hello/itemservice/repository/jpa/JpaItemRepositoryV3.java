@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.util.ArrayBuilders.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import java.util.List;
@@ -57,13 +58,21 @@ public class JpaItemRepositoryV3 implements ItemRepository {
 		String itemName = cond.getItemName();
 		Integer maxPrice = cond.getMaxPrice();
 		com.querydsl.core.BooleanBuilder builder = new com.querydsl.core.BooleanBuilder();
-		if (StringUtils.hasText(itemName)) {
-			builder.and(item.itemName.like("%" + itemName + "%"));
-		}
-		if (maxPrice != null) {
-			builder.and(item.price.loe(maxPrice));
-		}
-		List<Item> result = query.select(item).from(item).where(builder).fetch();
+		List<Item> result = query.select(item).from(item).where(likeItemName(itemName), maxPrice(maxPrice)).fetch();
 		return result;
+	}
+
+	private BooleanExpression likeItemName(String itemName) {
+		if (StringUtils.hasText(itemName)) {
+			return item.itemName.like("%" + itemName + "%");
+		}
+		return null;
+	}
+
+	private BooleanExpression maxPrice(Integer maxPrice) {
+		if (maxPrice != null) {
+			return item.price.loe(maxPrice);
+		}
+		return null;
 	}
 }
